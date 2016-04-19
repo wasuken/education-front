@@ -1,6 +1,6 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
-var jQuery = require('jquery');
+
 var Todo = React.createClass({
   render: function () {
     return (
@@ -53,51 +53,67 @@ var Todo = React.createClass({
   },
 
   getTaskList: function() {
-    jQuery.ajax({
-      url: this.props.base + this.props.index_url,
-      dataType: 'json',
-      success: function(data) {
-        this.setState({tasks: data});
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }.bind(this)
-    });
+    var self = this;
+    var url = this.props.base + this.props.index_url;
+    fetch(url, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(function(response){
+        return response.json();
+      })
+      .then(function(tasks){
+        self.setState({tasks: tasks});
+      })
+      .catch(function(ex) {
+        console.error(self.props.url, ex.toString());
+      });
   },
 
   // 完了ボタンが押された
   handleDone: function(task) {
-    jQuery.ajax({
-      url: this.props.base + task.done_url,
-      dataType: 'json',
-      type: "POST",
-      success: function(data) {
-        this.getTaskList();
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }.bind(this)
-    });
+    var url = this.props.base + task.done_url;
+    var self = this;
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(function(response){
+        self.getTaskList();
+      })
+      .catch(function(ex) {
+        console.error(self.props.url, ex.toString());
+      });
   },
 
   // 登録ボタンが押された
   handleNewTask: function(e) {
     e.preventDefault();
+    var url = this.props.base + this.props.create_url;
+    var self = this;
     var new_task = ReactDOM.findDOMNode(this.refs.new_task);
-    var data = {name: new_task.value.trim()};
-    jQuery.ajax({
-      url: this.props.base + this.props.create_url,
-      dataType: 'json',
-      type: "POST",
-      data: data,
-      success: function(data) {
+    var body = JSON.stringify({name: new_task.value.trim()});
+    fetch(url, {
+      method: 'POST',
+      body: body,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(function(response){
         new_task.value = "";
-        this.getTaskList();
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }.bind(this)
-    });
+        self.getTaskList();
+        return response.json();
+      })
+      .catch(function(ex){
+        console.error(self.props.url, ex.toString());
+      });
   }
 });
 
