@@ -14,8 +14,17 @@ var Todo = React.createClass({
               value="登録"
             />
           </form>
+          <h2>高</h2>
           <ul className="todo-tasks">
-            {this.tasks()}
+            {this.tasks2("high")}
+          </ul>
+          <h2>中</h2>
+          <ul className="todo-tasks">
+            {this.tasks2("middle")}
+          </ul>
+          <h2>低</h2>
+          <ul className="todo-tasks">
+            {this.tasks2("low")}
           </ul>
         </div>
       </div>
@@ -44,8 +53,33 @@ var Todo = React.createClass({
     }.bind(this));
   },
 
+  tasks2: function (type) {
+    console.log(this.state);
+    return this.state[type].map(function(task) {
+      var handleClick = function() {
+        this.handleDone(task);
+      }.bind(this);
+      var priority = "priority-middle";
+      var spanName = "中";
+      if (task.priority == "高") { priority = "priority-high"; }
+      if (task.priority == "低") { priority = "priority-low"; }
+      return (
+
+        <li className="todo-task" key={task.id}>
+          <div className={priority}>
+            <h4>{task.name}</h4>
+            
+            <button className="todo-done button" onClick={handleClick}>
+              完了
+            </button>
+          </div>
+        </li>
+      );
+    }.bind(this));
+  },
+
   getInitialState: function() {
-    return {tasks: []};
+    return {tasks: [],low:[],middle:[],high:[] };
   },
 
   componentDidMount: function() {
@@ -65,6 +99,21 @@ var Todo = React.createClass({
         return response.json();
       })
       .then(function(tasks){
+
+        var low = tasks.filter(function(task){
+          return task.priority == "低"
+        } );
+        var middle = tasks.filter(function(task){
+          return task.priority == "中"
+        } );
+        var high = tasks.filter(function(task){
+          return task.priority == "高"
+        } );
+        
+        self.setState({low:low});
+        self.setState({middle:middle});
+        self.setState({high:high});
+
         self.setState({tasks: tasks});
       })
       .catch(function(ex) {
